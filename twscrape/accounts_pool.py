@@ -103,7 +103,7 @@ class AccountsPool:
             mfa_code=mfa_code,
         )
 
-        if "ct0" in account.cookies:
+        if "auth_token" in account.cookies:
             account.active = True
 
         await self.save(account)

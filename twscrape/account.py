@@ -1,5 +1,6 @@
 import json
 import os
+import secrets
 import sqlite3
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -69,7 +70,8 @@ class Account(JSONTrait):
         client.headers["x-twitter-active-user"] = "yes"
         client.headers["x-twitter-client-language"] = "en"
 
-        if "ct0" in client.cookies:
-            client.headers["x-csrf-token"] = client.cookies["ct0"]
+        if not client.cookies.get("ct0"):
+            client.cookies["ct0"] = secrets.token_hex()
+        client.headers["x-csrf-token"] = client.cookies["ct0"]
 
         return client
