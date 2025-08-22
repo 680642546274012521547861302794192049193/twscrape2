@@ -71,7 +71,10 @@ class Account(JSONTrait):
         client.headers["x-twitter-client-language"] = "en"
 
         if not client.cookies.get("ct0"):
-            client.cookies["ct0"] = secrets.token_hex()
-        client.headers["x-csrf-token"] = client.cookies["ct0"]
+            self.cookies["ct0"] = secrets.token_hex(16)
+            client.cookies["ct0"] = self.cookies["ct0"]
+
+        if "ct0" in client.cookies:
+            client.headers["x-csrf-token"] = client.cookies["ct0"]
 
         return client

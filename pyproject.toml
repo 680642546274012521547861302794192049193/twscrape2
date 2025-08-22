@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "twscrape680"
-version = "0.19.6"
+version = "0.19.7"
 authors = [{name="xx", email="x@x.x"}]
 description = " "
 requires-python = ">=3.10"

@@ -141,10 +141,10 @@ class QueueClient:
             return
 
         if reset_at > 0:
-            await self.pool.lock_until(ctx.acc.username, self.queue, reset_at, ctx.req_count)
+            await self.pool.lock_until(ctx.acc.username, self.queue, reset_at, ctx.req_count, cookies=ctx.acc.cookies)
             return
 
-        await self.pool.unlock(ctx.acc.username, self.queue, ctx.req_count)
+        await self.pool.unlock(ctx.acc.username, self.queue, ctx.req_count, cookies=ctx.acc.cookies)
 
     async def _get_ctx(self):
         if self.ctx:

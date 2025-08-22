@@ -220,25 +220,37 @@ class AccountsPool:
         qs = "UPDATE accounts SET active = :active WHERE username = :username"
         await execute(self._db_file, qs, {"username": username, "active": active})
 
-    async def lock_until(self, username: str, queue: str, unlock_at: int, req_count=0):
+    async def lock_until(self, username: str, queue: str, unlock_at: int, req_count=0, cookies: dict | None = None):
+        params = {"username": username}
+        ct0_clause = ""
+        if cookies and (new_ct0 := cookies.get("ct0")):
+            ct0_clause = ",\n            cookies = json_set(cookies, '$.ct0', IFNULL(json_extract(cookies, '$.ct0'), :ct0))"
+            params["ct0"] = new_ct0
+
         qs = f"""
         UPDATE accounts SET
             locks = json_set(locks, '$.{queue}', datetime({unlock_at}, 'unixepoch')),
             stats = json_set(stats, '$.{queue}', COALESCE(json_extract(stats, '$.{queue}'), 0) + {req_count}),
-            last_used = datetime({utc.ts()}, 'unixepoch')
+            last_used = datetime({utc.ts()}, 'unixepoch'){ct0_clause}
         WHERE username = :username
         """
-        await execute(self._db_file, qs, {"username": username})
+        await execute(self._db_file, qs, params)
 
-    async def unlock(self, username: str, queue: str, req_count=0):
+    async def unlock(self, username: str, queue: str, req_count=0, cookies: dict | None = None):
+        params = {"username": username}
+        ct0_clause = ""
+        if cookies and (new_ct0 := cookies.get("ct0")):
+            ct0_clause = ",\n            cookies = json_set(cookies, '$.ct0', IFNULL(json_extract(cookies, '$.ct0'), :ct0))"
+            params["ct0"] = new_ct0
+
         qs = f"""
         UPDATE accounts SET
             locks = json_remove(locks, '$.{queue}'),
             stats = json_set(stats, '$.{queue}', COALESCE(json_extract(stats, '$.{queue}'), 0) + {req_count}),
-            last_used = datetime({utc.ts()}, 'unixepoch')
+            last_used = datetime({utc.ts()}, 'unixepoch'){ct0_clause}
         WHERE username = :username
         """
-        await execute(self._db_file, qs, {"username": username})
+        await execute(self._db_file, qs, params)
 
     async def _get_and_lock(self, queue: str, condition: str):
         # if space in condition, it's a subquery, otherwise it's username
