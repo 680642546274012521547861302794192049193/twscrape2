@@ -24,20 +24,21 @@ async def get_scripts():
     ]
 
     scripts = []
-    for i, x in enumerate(urls, 1):
-        cache_path = os.path.join(cache_dir, x.split("/")[-1].split("?")[0])
-        if os.path.exists(cache_path):
-            with open(cache_path) as fp:
-                scripts.append(fp.read())
-            continue
+    async with httpx.AsyncClient() as clit: 
+        for i, x in enumerate(urls, 1):
+            cache_path = os.path.join(cache_dir, x.split("/")[-1].split("?")[0])
+            if os.path.exists(cache_path):
+                with open(cache_path) as fp:
+                    scripts.append(fp.read())
+                continue
 
-        print(f"({i:3d} / {len(urls):3d}) {x}")
-        rep = await httpx.AsyncClient().get(x)
-        rep.raise_for_status()
+            print(f"({i:3d} / {len(urls):3d}) {x}")
+            rep = await clit.get(x)
+            rep.raise_for_status()
 
-        with open(cache_path, "w") as fp:
-            fp.write(rep.text)
-        scripts.append(rep.text)
+            with open(cache_path, "w") as fp:
+                fp.write(rep.text)
+            scripts.append(rep.text)
 
     return scripts
 
